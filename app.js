@@ -10,9 +10,16 @@ let bridge;
 let copyRow;
 let newData;
 let copyCell;
+let randomCol;
+let randomRow;
 let data = [];
 let startCoord;
-
+// data = [
+//     [2,2,2,2],
+//     [2,2,2,2],
+//     [2,2,2,2],
+//     [2,2,2,]
+// ];
 function clickDirection(event) {
   // 키보드를 눌렀을 때
   if (event.key === "ArrowUp") {
@@ -54,13 +61,6 @@ function eventHistoryControl() {
   data = prevData.table;
   draw();
 }
-// $table -> $fragment -> $tr -> $td
-function stopGame() {
-  window.removeEventListener("keyup", clickDirection);
-  window.removeEventListener("mousedown", startPoint);
-  window.removeEventListener("mouseup", endPoint);
-  $back.removeEventListener("click", eventHistoryControl);
-}
 
 function startGame() {
   [1, 2, 3, 4].forEach(() => {
@@ -74,11 +74,17 @@ function startGame() {
     }); // 두 번째 forEach종료
     $fragment.appendChild($tr); // fr안에 tr
   }); // 첫 번째 forEach종료
-  //dev console.log(data);
   $table.appendChild($fragment); // tb안에 fr
   put2ToRandomCell();
   draw();
-} // > put(), draw()
+}
+
+function stopGame() {
+  window.removeEventListener("keyup", clickDirection);
+  window.removeEventListener("mousedown", startPoint);
+  window.removeEventListener("mouseup", endPoint);
+  $back.removeEventListener("click", eventHistoryControl);
+}
 
 function put2ToRandomCell() {
   // 랜덤하게 2하나 생성
@@ -92,16 +98,10 @@ function put2ToRandomCell() {
       }
     });
   });
-  console.log(emptyCells);
-  // randomCell === [i, j]
   const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)]; // 16개의 좌표 중 아무거나 1개
-  console.log(
-    "random cell[0]: " +
-      randomCell[0] +
-      "      random cell[1]: " +
-      randomCell[1]
-  );
-  data[randomCell[0]][randomCell[1]] = 2; // 빈 셀 아무데나 2 생성
+  randomRow = randomCell[0];
+  randomCol = randomCell[1];
+  data[randomRow][randomCol] = 2; // 빈 셀 아무데나 2 생성
   emptyCells.splice(0, emptyCells.length);
 }
 
@@ -112,8 +112,11 @@ function draw() {
       const $target = $table.children[i].children[j]; // 16개 하나하나 타깃으로 잡음
       if (cellData) {
         //값이 있으면
+        $target.className = "";
         $target.textContent = cellData; // 웹상에도 업데이트
-        $target.className = "color-" + cellData; // 숫자마다 다른 색상
+        $target.classList.add("color-" + cellData); // 숫자마다 다른 색상
+        const newCell = $table.children[randomRow].children[randomCol];
+        newCell.classList.add("newBlock");
       } else {
         // 빈 칸 이면 공백처리
         $target.textContent = "";
@@ -156,23 +159,13 @@ function changeValue(arrow, row, cell) {
   return (data[copyRow][copyCell] = Math.abs(newData[row][cell]) || 0);
 } // changeValue 함수 종료
 
-//  data = [
-//    [32, 2, 4, 2],
-//    [64, 4, 8, 4],
-//    [2, 1024, 1024, 32],
-//    [32, 16, 64, 4],
-// ];
-
 function moveCells(direction) {
   history.push({
     table: JSON.parse(JSON.stringify(data)),
     score: $score.textContent,
   });
   const checkMove = data.flat();
-  if (checkMove[0] == data.flat()[0]) {
-    console.log("both of index 0 is same");
-  }
-  function 숫자합치기(type) {
+  function combineNumber(type) {
     function getNowData(type, cellData, rowData, data) {
       if (type === "left") return cellData;
       if (type === "right") return rowData;
@@ -198,26 +191,31 @@ function moveCells(direction) {
           if (prevData === nowData) {
             const score = parseInt($score.textContent);
             $score.textContent = score + currentRow[currentRow.length - 1] * 2;
+
             currentRow[currentRow.length - 1] *= -2;
-            //console.log("if sum: "+newData);
           } else {
             type === "left" || type === "right"
               ? newData[i].push(nowData)
               : newData[j].push(nowData);
-            //console.log("if not sum: "+newData);
           }
+        }
+      });
+    });
+    [0, 1, 2, 3].forEach((element1, index1) => {
+      [0, 1, 2, 3].forEach((element2, index2) => {
+        if (data[index1][index2] === 0 && data[index1][index2 + 1]) {
         }
       });
     });
     updateData(newData, type);
   } // 숫자 합치기 함수 종료
 
-  숫자합치기(direction);
-  console.log("data.flat: " + data.flat() + " >> after value");
-  if (checkMove.every(
-      (element, index) => {
+  combineNumber(direction);
+  if (
+    checkMove.every((element, index) => {
       return element === data.flat()[index];
-    })) {
+    })
+  ) {
     return;
   }
 
@@ -248,4 +246,10 @@ window.addEventListener("mouseup", endPoint);
 
 document.addEventListener("DOMContentLoaded", () => {
   startGame();
+  data = [
+    [2, 4, 4, 2],
+    [2, 2, 2, 2],
+    [4, 2, 2, 4],
+    [2, 4, 4],
+  ];
 });
